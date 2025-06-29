@@ -1,15 +1,17 @@
 from typing import List, Optional
 from fastapi import APIRouter, Query, Request, HTTPException
-from app.schemas.enums import CompanyEnum, DepartmentEnum, LocationEnum, PositionEnum, StatusEnum
+
+from app.utils.rate_limiter import rate_limit
 from app.services.search_services import SearchService
-from app.utils.rate_limiter import is_allowed
+from app.schemas.enums import CompanyEnum, DepartmentEnum, LocationEnum, PositionEnum, StatusEnum
 
 
 router = APIRouter()
 
 
 @router.get("/")
-def search(
+@rate_limit
+async def search(
     request: Request,
     org_id: str = Query(...),
     query: str = Query(""),
@@ -19,10 +21,5 @@ def search(
     department: List[DepartmentEnum] = Query(default=[]),
     position: List[PositionEnum] = Query(default=[])
 ):
-    user_ip = request.client.host
-    user_key = f"{user_ip}"
-
-    if not is_allowed(user_key):
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
-
-    return SearchService().search_employees(org_id, query, status, location, company, department, position)
+    search_service = SearchService()
+    return await search_service.search_employees(org_id, query, status, location, company, department, position)

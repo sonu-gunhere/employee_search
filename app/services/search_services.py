@@ -11,7 +11,7 @@ class SearchService:
     def __init__(self):
         pass
 
-    def search_employees(
+    async def search_employees(
             self,
             org_id: str,
             query: str,
